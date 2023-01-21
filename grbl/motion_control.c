@@ -38,8 +38,10 @@
 {
   // If enabled, check for soft limit violations. Placed here all line motions are picked up
   // from everywhere in Grbl.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (bit_istrue(settings.flags,BITFLAG_SOFT_LIMIT_ENABLE)) { limits_soft_check(target); }    
-      
+  #endif
+
   // If in check gcode mode, prevent motion by blocking planner. Soft limits still work.
   if (sys.state == STATE_CHECK_MODE) { return; }
     
@@ -232,18 +234,22 @@ void mc_homing_cycle()
     }
   #endif
    
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   limits_disable(); // Disable hard limits pin change register for cycle duration
-    
+  #endif
+
   // -------------------------------------------------------------------------------------
   // Perform homing routine. NOTE: Special motion case. Only system reset works.
   
   // Search to engage all axes limit switches at faster homing seek rate.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   limits_go_home(HOMING_CYCLE_0);  // Homing cycle 0
   #ifdef HOMING_CYCLE_1
     limits_go_home(HOMING_CYCLE_1);  // Homing cycle 1
   #endif
   #ifdef HOMING_CYCLE_2
     limits_go_home(HOMING_CYCLE_2);  // Homing cycle 2
+  #endif
   #endif
     
   protocol_execute_realtime(); // Check for reset and set system abort.
@@ -256,7 +262,9 @@ void mc_homing_cycle()
   gc_sync_position();
 
   // If hard limits feature enabled, re-enable hard limits pin change register after homing cycle.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   limits_init();
+  #endif
 }
 
 
@@ -278,14 +286,18 @@ void mc_homing_cycle()
 
   // Initialize probing control variables
   sys.probe_succeeded = false; // Re-initialize probe history before beginning cycle.  
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   probe_configure_invert_mask(is_probe_away);
-  
+  #endif
+
   // After syncing, check if probe is already triggered. If so, halt and issue alarm.
   // NOTE: This probe initialization error applies to all probing cycles.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if ( probe_get_state() ) { // Check probe pin state.
     bit_true_atomic(sys_rt_exec_alarm, EXEC_ALARM_PROBE_FAIL);
     protocol_execute_realtime();
   }
+  #endif
   if (sys.abort) { return; } // Return if system reset has been issued.
 
   // Setup and queue probing motion. Auto cycle-start should not start the cycle.
@@ -345,9 +357,11 @@ void mc_reset()
   if (bit_isfalse(sys_rt_exec_state, EXEC_RESET)) {
     bit_true_atomic(sys_rt_exec_state, EXEC_RESET);
 
+    #ifndef CPU_MAP_VERTICAL_PLOTTER
     // Kill spindle and coolant.   
     spindle_stop();
     coolant_stop();
+    #endif
 
     // Kill steppers only if in any motion state, i.e. cycle, actively holding, or homing.
     // NOTE: If steppers are kept enabled via the step idle delay setting, this also keeps

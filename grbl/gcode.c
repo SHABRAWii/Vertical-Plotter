@@ -847,30 +847,36 @@ uint8_t gc_execute_line(char *line)
   // [3. Set feed rate ]:
   gc_state.feed_rate = gc_block.values.f; // Always copy this value. See feed rate error-checking.
 
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   // [4. Set spindle speed ]:
   if (gc_state.spindle_speed != gc_block.values.s) { 
     // Update running spindle only if not in check mode and not already enabled.
     if (gc_state.modal.spindle != SPINDLE_DISABLE) { spindle_run(gc_state.modal.spindle, gc_block.values.s); }
     gc_state.spindle_speed = gc_block.values.s; 
   }
-    
+  #endif
+
   // [5. Select tool ]: NOT SUPPORTED. Only tracks tool value.
   gc_state.tool = gc_block.values.t;
 
   // [6. Change tool ]: NOT SUPPORTED
 
   // [7. Spindle control ]:
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (gc_state.modal.spindle != gc_block.modal.spindle) {
     // Update spindle control and apply spindle speed when enabling it in this block.    
     spindle_run(gc_block.modal.spindle, gc_state.spindle_speed);
     gc_state.modal.spindle = gc_block.modal.spindle;    
   }
+  #endif
 
   // [8. Coolant control ]:  
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (gc_state.modal.coolant != gc_block.modal.coolant) {
     coolant_run(gc_block.modal.coolant);
     gc_state.modal.coolant = gc_block.modal.coolant;
   }
+  #endif
   
   // [9. Enable/disable feed rate or spindle overrides ]: NOT SUPPORTED
 
@@ -1059,8 +1065,10 @@ uint8_t gc_execute_line(char *line)
 	  if (sys.state != STATE_CHECK_MODE) {
 		if (!(settings_read_coord_data(gc_state.modal.coord_select,coordinate_data))) { FAIL(STATUS_SETTING_READ_FAIL); } 
 		memcpy(gc_state.coord_system,coordinate_data,sizeof(coordinate_data));
+    #ifndef CPU_MAP_VERTICAL_PLOTTER
 		spindle_stop();
 		coolant_stop();		
+    #endif
 	  }
 	  
 	  report_feedback_message(MESSAGE_PROGRAM_END);
