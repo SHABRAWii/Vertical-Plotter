@@ -182,9 +182,11 @@ static st_prep_t prep;
 // enabled. Startup init and limits call this function but shouldn't start the cycle.
 void st_wake_up() 
 {
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   // Enable stepper drivers.
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
   else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+  #endif
 
   if (sys.state & (STATE_CYCLE | STATE_HOMING)){
     // Initialize stepper output bits
@@ -225,8 +227,10 @@ void st_go_idle()
     pin_state = true; // Override. Disable steppers.
   }
   if (bit_istrue(settings.flags,BITFLAG_INVERT_ST_ENABLE)) { pin_state = !pin_state; } // Apply pin invert.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (pin_state) { STEPPERS_DISABLE_PORT |= (1<<STEPPERS_DISABLE_BIT); }
   else { STEPPERS_DISABLE_PORT &= ~(1<<STEPPERS_DISABLE_BIT); }
+  #endif
 }
 
 
@@ -343,10 +347,11 @@ ISR(TIMER1_COMPA_vect)
     }  
   }
   
-  
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   // Check probing state.
   probe_state_monitor();
-   
+  #endif
+  
   // Reset step out bits.
   st.step_outbits = 0; 
 
@@ -359,8 +364,12 @@ ISR(TIMER1_COMPA_vect)
   if (st.counter_x > st.exec_block->step_event_count) {
     st.step_outbits |= (1<<X_STEP_BIT);
     st.counter_x -= st.exec_block->step_event_count;
+    #ifdef CPU_MAP_VERTICAL_PLOTTER
+    Geometry_system_position(X_AXIS, !(st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)), sys.position);
+    #else
     if (st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) { sys.position[X_AXIS]--; }
     else { sys.position[X_AXIS]++; }
+    #endif
   }
   #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
     st.counter_y += st.steps[Y_AXIS];
@@ -370,9 +379,14 @@ ISR(TIMER1_COMPA_vect)
   if (st.counter_y > st.exec_block->step_event_count) {
     st.step_outbits |= (1<<Y_STEP_BIT);
     st.counter_y -= st.exec_block->step_event_count;
+    #ifdef CPU_MAP_VERTICAL_PLOTTER
+    Geometry_system_position(Y_AXIS, !(st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT)), sys.position);
+    #else
     if (st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT)) { sys.position[Y_AXIS]--; }
     else { sys.position[Y_AXIS]++; }
+    #endif
   }
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
     st.counter_z += st.steps[Z_AXIS];
   #else
@@ -384,6 +398,7 @@ ISR(TIMER1_COMPA_vect)
     if (st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT)) { sys.position[Z_AXIS]--; }
     else { sys.position[Z_AXIS]++; }
   }  
+  #endif
 
   // During a homing cycle, lock out and prevent desired axes from moving.
   if (sys.state == STATE_HOMING) { st.step_outbits &= sys.homing_axis_lock; }   
@@ -473,7 +488,9 @@ void stepper_init()
 {
   // Configure step and direction interface pins
   STEP_DDR |= STEP_MASK;
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
+  #endif
   DIRECTION_DDR |= DIRECTION_MASK;
 
   // Configure Timer 1: Stepper Driver Interrupt
