@@ -3,6 +3,6 @@
 *.elf
 *.DS_Store
 *.d
-
+.vscode
 
 /Working
