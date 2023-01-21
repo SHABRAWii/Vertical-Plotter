@@ -253,6 +253,7 @@ uint8_t system_execute_line(char *line)
           } else { // Store global setting.
             if(!read_float(line, &char_counter, &value)) { return(STATUS_BAD_NUMBER_FORMAT); }
             if((line[char_counter] != 0) || (parameter > 255)) { return(STATUS_INVALID_STATEMENT); }
+            plan_update_sys_position(); // Update system position before storing new settings.
             return(settings_store_global_setting((uint8_t)parameter, value));
           }
       }    
@@ -264,7 +265,11 @@ uint8_t system_execute_line(char *line)
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
 // NOTE: If motor steps and machine position are not in the same coordinate frame, this function
 //   serves as a central place to compute the transformation.
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+float system_convert_axis_steps_to_mpos(float *steps, uint8_t idx)
+#else
 float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx)
+#endif
 {
   float pos;
   #ifdef COREXY
@@ -281,8 +286,11 @@ float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx)
   return(pos);
 }
 
-
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+void system_convert_array_steps_to_mpos(float *position, float *steps)
+#else
 void system_convert_array_steps_to_mpos(float *position, int32_t *steps)
+#endif
 {
   uint8_t idx;
   for (idx=0; idx<N_AXIS; idx++) {

@@ -74,10 +74,14 @@ typedef struct {
   uint8_t suspend;               // System suspend bitflag variable that manages holds, cancels, and safety door.
   uint8_t soft_limit;            // Tracks soft limit errors for the state machine. (boolean)
   
+  #ifdef CPU_MAP_VERTICAL_PLOTTER
+  float position[N_AXIS];      // Real-time machine (aka home) position vector in steps. 
+  float probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
+  #else
   int32_t position[N_AXIS];      // Real-time machine (aka home) position vector in steps. 
                                  // NOTE: This may need to be a volatile variable, if problems arise.                             
-
   int32_t probe_position[N_AXIS]; // Last probe position in machine coordinates and steps.
+  #endif
   uint8_t probe_succeeded;        // Tracks if last probing cycle was successful.
   uint8_t homing_axis_lock;       // Locks axes when limits engage. Used as an axis motion mask in the stepper ISR.
 } system_t;
@@ -100,11 +104,19 @@ uint8_t system_execute_line(char *line);
 // Execute the startup script lines stored in EEPROM upon initialization
 void system_execute_startup(char *line);
 
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+float system_convert_axis_steps_to_mpos(float *steps, uint8_t idx);
+#else
 // Returns machine position of axis 'idx'. Must be sent a 'step' array.
 float system_convert_axis_steps_to_mpos(int32_t *steps, uint8_t idx);
+#endif
 
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+void system_convert_array_steps_to_mpos(float *position, float *steps);
+#else
 // Updates a machine 'position' array based on the 'step' array sent.
 void system_convert_array_steps_to_mpos(float *position, int32_t *steps);
+#endif
 
 // CoreXY calculation only. Returns x or y-axis "steps" based on CoreXY motor steps.
 #ifdef COREXY
