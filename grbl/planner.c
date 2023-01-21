@@ -268,6 +268,12 @@ uint8_t plan_check_full_buffer()
     block->line_number = line_number;
   #endif
 
+  #ifdef CPU_MAP_VERTICAL_PLOTTER
+  int32_t target_steps[N_AXIS];
+  float unit_vec[N_AXIS];
+  uint8_t idx;
+  Convert_Geometry(pl.position, target, block, unit_vec, target_steps);
+  #else
   // Compute and store initial move distance data.
   // TODO: After this for-loop, we don't touch the stepper algorithm data. Might be a good idea
   // to try to keep these types of things completely separate from the planner for portability.
@@ -313,7 +319,7 @@ uint8_t plan_check_full_buffer()
     block->millimeters += delta_mm*delta_mm;
   }
   block->millimeters = sqrt(block->millimeters); // Complete millimeters calculation with sqrt()
-  
+  #endif
   // Bail if this is a zero-length block. Highly unlikely to occur.
   if (block->step_event_count == 0) { return; } 
   
@@ -455,3 +461,13 @@ void plan_cycle_reinitialize()
   block_buffer_planned = block_buffer_tail;
   planner_recalculate();  
 }
+
+
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+void plan_update_sys_position(){
+  // if(abs(pl.position[X_AXIS] - sys.position[X_AXIS]) > 1.0 || abs(pl.position[Y_AXIS] - sys.position[Y_AXIS]) > 1.0) return;
+  // printString("Updating sys position\r\n");
+  sys.position[X_AXIS] = pl.position[X_AXIS];
+  sys.position[Y_AXIS] = pl.position[Y_AXIS];
+}
+#endif

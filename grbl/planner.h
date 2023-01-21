@@ -94,4 +94,9 @@ uint8_t plan_get_block_buffer_count();
 // Returns the status of the block ring buffer. True, if buffer is full.
 uint8_t plan_check_full_buffer();
 
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+// Update sys.position
+void plan_update_sys_position();
+#endif
+
 #endif
