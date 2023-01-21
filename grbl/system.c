@@ -19,6 +19,7 @@
 */
 
 #include "grbl.h"
+#ifdef CPU_MAP_ATMEGA328P
 
 
 void system_init() 
@@ -75,7 +76,7 @@ uint8_t system_check_safety_door_ajar()
     return(false); // Input pin not enabled, so just return that it's closed.
   #endif
 }
-
+#endif
 
 // Executes user startup script, if stored.
 void system_execute_startup(char *line) 
@@ -138,10 +139,12 @@ uint8_t system_execute_line(char *line)
             report_feedback_message(MESSAGE_ALARM_UNLOCK);
             sys.state = STATE_IDLE;
             // Don't run startup script. Prevents stored moves in startup from causing accidents.
+            #ifndef CPU_MAP_VERTICAL_PLOTTER
             if (system_check_safety_door_ajar()) { // Check safety door switch before returning.
               bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
               protocol_execute_realtime(); // Enter safety door mode.
             }
+            #endif
           } // Otherwise, no effect.
           break;                   
     //  case 'J' : break;  // Jogging methods
@@ -173,12 +176,13 @@ uint8_t system_execute_line(char *line)
             sys.state = STATE_HOMING; // Set system state variable
             // Only perform homing if Grbl is idle or lost.
             
+            #ifndef CPU_MAP_VERTICAL_PLOTTER
             // TODO: Likely not required.
             if (system_check_safety_door_ajar()) { // Check safety door switch before homing.
               bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
               protocol_execute_realtime(); // Enter safety door mode.
             }
-            
+            #endif
             
             mc_homing_cycle(); 
             if (!sys.abort) {  // Execute startup scripts after successful homing.
