@@ -58,5 +58,10 @@
 #include "serial.h"
 #include "spindle_control.h"
 #include "stepper.h"
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+  #include "servo_control.h"
+  #include "geometry_control.h"
+  #include <stdio.h>
+#endif
 
 #endif
