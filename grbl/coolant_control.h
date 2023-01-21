@@ -17,7 +17,7 @@
   You should have received a copy of the GNU General Public License
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 #ifndef coolant_control_h
 #define coolant_control_h 
 
@@ -27,4 +27,5 @@ void coolant_stop();
 void coolant_set_state(uint8_t mode);
 void coolant_run(uint8_t mode);
 
+#endif
 #endif

@@ -20,7 +20,7 @@
 */
   
 #include "grbl.h"
-
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 
 // Homing axis search distance multiplier. Computed by this value times the cycle travel.
 #ifndef HOMING_AXIS_SEARCH_SCALAR
@@ -368,3 +368,4 @@ void limits_soft_check(float *target)
     }
   }
 }
+#endif

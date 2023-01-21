@@ -19,7 +19,7 @@
 */  
 
 #include "grbl.h"
-
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 
 void coolant_init()
 {
@@ -62,3 +62,4 @@ void coolant_run(uint8_t mode)
   protocol_buffer_synchronize(); // Ensure coolant turns on when specified in program.  
   coolant_set_state(mode);
 }
+#endif

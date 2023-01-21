@@ -18,8 +18,8 @@
   You should have received a copy of the GNU General Public License
   along with Grbl.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "grbl.h"
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 
 
 void spindle_init()
@@ -139,3 +139,5 @@ void spindle_run(uint8_t state, float rpm)
   protocol_buffer_synchronize(); // Empty planner buffer to ensure spindle is set when programmed.  
   spindle_set_state(state, rpm);
 }
+
+#endif

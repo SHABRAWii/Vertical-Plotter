@@ -19,7 +19,7 @@
 */
   
 #include "grbl.h"
-
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 
 // Inverts the probe pin state depending on user settings and probing cycle mode.
 uint8_t probe_invert_mask;
@@ -66,3 +66,4 @@ void probe_state_monitor()
     }
   }
 }
+#endif
