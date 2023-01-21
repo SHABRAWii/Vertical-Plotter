@@ -92,6 +92,11 @@ void settings_restore(uint8_t restore_flag) {
 	settings.max_travel[Y_AXIS] = (-DEFAULT_Y_MAX_TRAVEL);
 	settings.max_travel[Z_AXIS] = (-DEFAULT_Z_MAX_TRAVEL);    
 
+  #ifdef CPU_MAP_VERTICAL_PLOTTER 
+  settings.homing_x = HOME_X;
+  settings.homing_y = HOME_Y;
+  #endif
+
 	write_global_settings();
   }
   
@@ -176,6 +181,22 @@ uint8_t read_global_settings() {
 uint8_t settings_store_global_setting(uint8_t parameter, float value) {
   if (value < 0.0) { return(STATUS_NEGATIVE_VALUE); } 
   if (parameter >= AXIS_SETTINGS_START_VAL) {
+    #ifdef CPU_MAP_VERTICAL_PLOTTER
+      if(parameter >= 133) {
+        parameter -= 133;
+        switch (parameter) {
+          case 0:
+            settings.homing_x = value;
+            break;
+          case 1:
+            settings.homing_y = value;
+            break;
+          default:
+            return(STATUS_INVALID_STATEMENT);
+        }
+        return(STATUS_OK);
+      }
+    #endif
     // Store axis configuration. Axis numbering sequence set by AXIS_SETTING defines.
     // NOTE: Ensure the setting index corresponds to the report.c settings printout.
     parameter -= AXIS_SETTINGS_START_VAL;
@@ -251,7 +272,9 @@ uint8_t settings_store_global_setting(uint8_t parameter, float value) {
       case 21:
         if (int_value) { settings.flags |= BITFLAG_HARD_LIMIT_ENABLE; }
         else { settings.flags &= ~BITFLAG_HARD_LIMIT_ENABLE; }
+        #ifndef CPU_MAP_VERTICAL_PLOTTER
         limits_init(); // Re-init to immediately change. NOTE: Nice to have but could be problematic later.
+        #endif
         break;
       case 22:
         if (int_value) { settings.flags |= BITFLAG_HOMING_ENABLE; }
@@ -281,6 +304,12 @@ void settings_init() {
     settings_restore(SETTINGS_RESTORE_ALL); // Force restore all EEPROM data.
     report_grbl_settings();
   }
+  #ifdef CPU_MAP_VERTICAL_PLOTTER
+  if(isnan(settings.homing_x))
+    settings.homing_x = HOME_X;
+  if(isnan(settings.homing_y))
+    settings.homing_y = HOME_Y;
+  #endif
 
   // NOTE: Checking paramater data, startup lines, and build info string should be done here, 
   // but it seems fairly redundant. Each of these can be manually checked and reset or restored.
@@ -301,23 +330,34 @@ uint8_t get_step_pin_mask(uint8_t axis_idx)
 {
   if ( axis_idx == X_AXIS ) { return((1<<X_STEP_BIT)); }
   if ( axis_idx == Y_AXIS ) { return((1<<Y_STEP_BIT)); }
-  return((1<<Z_STEP_BIT));
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
+  return((1<<Z_STEP_BIT)); // Youssef: TODO: Check this
+  #endif
+  return 0;
 }
 
 
 // Returns direction pin mask according to Grbl internal axis indexing.
 uint8_t get_direction_pin_mask(uint8_t axis_idx)
 {
+  
   if ( axis_idx == X_AXIS ) { return((1<<X_DIRECTION_BIT)); }
   if ( axis_idx == Y_AXIS ) { return((1<<Y_DIRECTION_BIT)); }
-  return((1<<Z_DIRECTION_BIT));
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
+  return((1<<Z_DIRECTION_BIT)); // Youssef: TODO: Check this
+  #endif
+  return 0;
 }
 
-
+#ifndef CPU_MAP_VERTICAL_PLOTTER
 // Returns limit pin mask according to Grbl internal axis indexing.
 uint8_t get_limit_pin_mask(uint8_t axis_idx)
 {
   if ( axis_idx == X_AXIS ) { return((1<<X_LIMIT_BIT)); }
   if ( axis_idx == Y_AXIS ) { return((1<<Y_LIMIT_BIT)); }
-  return((1<<Z_LIMIT_BIT));
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
+  return((1<<Z_LIMIT_BIT));// Youssef: No limit BIT
+  #endif
+  return 0;
 }
+#endif

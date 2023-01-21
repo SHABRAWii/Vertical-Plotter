@@ -425,7 +425,11 @@ void report_realtime_status()
   // to be added are distance to go on block, processed block id, and feed rate. Also a settings bitmask
   // for a user to select the desired real-time data.
   uint8_t idx;
+  #ifdef CPU_MAP_VERTICAL_PLOTTER
+  float current_position[N_AXIS]; // Copy current state of the system position variable
+  #else
   int32_t current_position[N_AXIS]; // Copy current state of the system position variable
+  #endif
   memcpy(current_position,sys.position,sizeof(sys.position));
   float print_position[N_AXIS];
  
@@ -495,11 +499,12 @@ void report_realtime_status()
     printPgmString(PSTR(",F:")); 
     printFloat_RateValue(st_get_realtime_rate());
   #endif    
-  
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (bit_istrue(settings.status_report_mask,BITFLAG_RT_STATUS_LIMIT_PINS)) {
     printPgmString(PSTR(",Lim:"));
     print_unsigned_int8(limits_get_state(),2,N_AXIS);
   }
+  #endif
   
   #ifdef REPORT_CONTROL_PIN_STATE 
     printPgmString(PSTR(",Ctl:"));
