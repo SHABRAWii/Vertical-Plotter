@@ -37,6 +37,10 @@
   #include "cpu_map/cpu_map_atmega2560.h"
 #endif
 
+#ifdef CPU_MAP_VERTICAL_PLOTTER // (Vertical Plotter) Working @Youssef_Shabrawii
+  #include "cpu_map/cpu_map_vertical_plotter.h"
+#endif
+
 /* 
 #ifdef CPU_MAP_CUSTOM_PROC
   // For a custom pin map or different processor, copy and edit one of the available cpu
