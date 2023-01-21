@@ -38,7 +38,20 @@
 
 // Default cpu mappings. Grbl officially supports the Arduino Uno only. Other processor types
 // may exist from user-supplied templates or directly user-defined in cpu_map.h
-#define CPU_MAP_ATMEGA328P // Arduino Uno CPU
+// #define CPU_MAP_ATMEGA328P // Arduino Uno CPU
+#define CPU_MAP_VERTICAL_PLOTTER // Vertical Plotter CPU @Youssef_Shabrawii
+#ifdef CPU_MAP_VERTICAL_PLOTTER
+#if defined(width) || defined(height) || defined(home_x) || defined(home_y) || defined(MS1)
+  #error "width, height, home_x, home_y, MS1 is defined some where"
+#endif
+#define MACHINE_WIDTH 1032    // width  in mm
+#define MACHINE_HEIGHT 100   // hight  in mm
+#define HOME_X 494     // home_x in mm, calculated from top left motor
+#define HOME_Y 305     // home_y in mm, calculated from top left motor
+#define M1_INVERT_DIRECTION 0 // 0 = normal, 1 = invert
+#define M2_INVERT_DIRECTION 1 // 0 = normal, 1 = invert
+
+#endif
 
 // Define realtime command special characters. These characters are 'picked-off' directly from the
 // serial read data stream and are not passed to the grbl line execution parser. Select characters
