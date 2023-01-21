@@ -32,7 +32,9 @@ int main(void)
   serial_init();   // Setup serial baud rate and interrupts
   settings_init(); // Load Grbl settings from EEPROM
   stepper_init();  // Configure stepper pins and interrupt timers
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   system_init();   // Configure pinout pins and pin-change interrupt
+  #endif
   
   memset(&sys, 0, sizeof(system_t));  // Clear all system variables
   sys.abort = true;   // Set abort to complete initialization
@@ -64,10 +66,12 @@ int main(void)
     // Reset Grbl primary systems.
     serial_reset_read_buffer(); // Clear serial read buffer
     gc_init(); // Set g-code parser to default state
+    #ifndef CPU_MAP_VERTICAL_PLOTTER
     spindle_init();
     coolant_init();
     limits_init(); 
     probe_init();
+    #endif
     plan_reset(); // Clear block buffer and planner variables
     st_reset(); // Clear stepper subsystem variables.
 

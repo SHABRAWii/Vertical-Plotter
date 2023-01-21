@@ -78,12 +78,14 @@ void protocol_main_loop()
     report_feedback_message(MESSAGE_ALARM_LOCK); 
   } else {
     // All systems go! But first check for safety door.
+    #ifndef CPU_MAP_VERTICAL_PLOTTER
     if (system_check_safety_door_ajar()) {
       bit_true(sys_rt_exec_state, EXEC_SAFETY_DOOR);
       protocol_execute_realtime(); // Enter safety door mode. Should return as IDLE state.
     } else {
       sys.state = STATE_IDLE; // Set system to ready. Clear all state flags.
     } 
+    #endif
     system_execute_startup(line); // Execute startup script.
   }
     
@@ -303,6 +305,7 @@ void protocol_execute_realtime()
         // NOTE: SAFETY_DOOR is implicitly blocked. It reverts to HOLD when the door is closed.
         if ((sys.state == STATE_IDLE) || ((sys.state & (STATE_HOLD | STATE_MOTION_CANCEL)) && (sys.suspend & SUSPEND_ENABLE_READY))) {
           // Re-energize powered components, if disabled by SAFETY_DOOR.
+          #ifndef CPU_MAP_VERTICAL_PLOTTER
           if (sys.suspend & SUSPEND_ENERGIZE) { 
             // Delayed Tasks: Restart spindle and coolant, delay to power-up, then resume cycle.
             if (gc_state.modal.spindle != SPINDLE_DISABLE) { 
@@ -315,6 +318,7 @@ void protocol_execute_realtime()
             }
             // TODO: Install return to pre-park position.
           }
+          #endif
           // Start cycle only if queued motions exist in planner buffer and the motion is not canceled.
           if (plan_get_current_block() && bit_isfalse(sys.suspend,SUSPEND_MOTION_CANCEL)) {
             sys.state = STATE_CYCLE;
@@ -339,8 +343,10 @@ void protocol_execute_realtime()
         // Hold complete. Set to indicate ready to resume.  Remain in HOLD or DOOR states until user
         // has issued a resume command or reset.
         if (sys.suspend & SUSPEND_ENERGIZE) { // De-energize system if safety door has been opened.
+          #ifndef CPU_MAP_VERTICAL_PLOTTER
           spindle_stop();
           coolant_stop();
+          #endif
         }
         bit_true(sys.suspend,SUSPEND_ENABLE_READY);
       } else { // Motion is complete. Includes CYCLE, HOMING, and MOTION_CANCEL states.
@@ -360,6 +366,7 @@ void protocol_execute_realtime()
   
   // If safety door was opened, actively check when safety door is closed and ready to resume.
   // NOTE: This unlocks the SAFETY_DOOR state to a HOLD state, such that CYCLE_START can activate a resume.
+  #ifndef CPU_MAP_VERTICAL_PLOTTER
   if (sys.state == STATE_SAFETY_DOOR) { 
     if (bit_istrue(sys.suspend,SUSPEND_ENABLE_READY)) { 
       if (!(system_check_safety_door_ajar())) {
@@ -367,6 +374,7 @@ void protocol_execute_realtime()
       }
     }
   }
+  #endif
 
   } while(sys.suspend); // Check for system suspend state before exiting.
   
